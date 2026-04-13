@@ -1,9 +1,12 @@
 #!/usr/bin/env ruby
 # dkit — DevKit CLI: routes shell commands into a running devcontainer
 #
-# Install (host macOS):
-#   cp dkit ~/.local/bin/dkit && chmod +x ~/.local/bin/dkit
+# Install:
+#   gem install dkit
 #   echo 'eval "$(dkit hook)"' >> ~/.zshrc && exec zsh
+#
+# Install from source:
+#   gem build dkit.gemspec && gem install dkit-*.gem
 #
 # Usage: dkit help
 
