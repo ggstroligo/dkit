@@ -16,7 +16,7 @@ require 'pathname'
 require 'shellwords'
 require 'fileutils'
 
-VERSION   = "0.3.3"
+VERSION   = "0.4.0"
 DC_CONFIG = ".devcontainer/devcontainer.json"
 DC_INTERCEPT = ".devcontainer/dkit-intercept"
 
@@ -228,6 +228,8 @@ def cmd_hook
 
     _DKIT_ROOT=""
     _DKIT_ACTIVE_CMDS=()
+    _DKIT_GLOB_PATTERNS=()
+    _DKIT_GLOB_CMDS=()
 
     _dkit_reset() {
       local cmd
@@ -235,6 +237,8 @@ def cmd_hook
         unfunction "$cmd" 2>/dev/null
       done
       _DKIT_ACTIVE_CMDS=()
+      _DKIT_GLOB_PATTERNS=()
+      _DKIT_GLOB_CMDS=()
     }
 
     _dkit_verbose_fallback() {
@@ -242,6 +246,43 @@ def cmd_hook
       local _ic="${_DKIT_ROOT}/.devcontainer/dkit-intercept"
       grep -qxF 'verbose: false' "$_ic" 2>/dev/null && return
       printf '\033[31m[dkit] %s → host (fallback)\033[0m\n' "$1" >&2
+    }
+
+    _dkit_expand_glob() {
+      local root="$1" pattern="$2"
+      local full_pattern="$root/$pattern"
+      local matches=( ${~full_pattern}(N*) )
+      local m rel
+      for m in "${matches[@]}"; do
+        rel="${m#$root/}"
+        (( ${_DKIT_ACTIVE_CMDS[(Ie)$rel]} )) && continue
+        eval "function ${rel}() {
+          if dkit status --quiet 2>/dev/null; then
+            dkit run ${rel} \"\$@\"
+          else
+            _dkit_verbose_fallback \"${rel}\"
+            command ${rel} \"\$@\"
+          fi
+        }"
+        _DKIT_ACTIVE_CMDS+=("${rel}")
+        _DKIT_GLOB_CMDS+=("${rel}")
+      done
+    }
+
+    _dkit_refresh_globs() {
+      [[ -z "$_DKIT_ROOT" || ${#_DKIT_GLOB_PATTERNS[@]} -eq 0 ]] && return
+      local cmd
+      for cmd in "${_DKIT_GLOB_CMDS[@]}"; do
+        if [[ ! -e "$_DKIT_ROOT/$cmd" ]]; then
+          unfunction "$cmd" 2>/dev/null
+          _DKIT_ACTIVE_CMDS=("${(@)_DKIT_ACTIVE_CMDS:#$cmd}")
+        fi
+      done
+      _DKIT_GLOB_CMDS=()
+      local pat
+      for pat in "${_DKIT_GLOB_PATTERNS[@]}"; do
+        _dkit_expand_glob "$_DKIT_ROOT" "$pat"
+      done
     }
 
     _dkit_load() {
@@ -255,6 +296,12 @@ def cmd_hook
         cmd="${cmd## }"
         cmd="${cmd%% }"
         [[ -z "$cmd" ]] && continue
+        # Glob pattern: expand matching executables
+        if [[ "$cmd" == *[\*\?\[]* ]]; then
+          _DKIT_GLOB_PATTERNS+=("${cmd}")
+          _dkit_expand_glob "$root" "$cmd"
+          continue
+        fi
         eval "function ${cmd}() {
           if dkit status --quiet 2>/dev/null; then
             dkit run ${cmd} \"\$@\"
@@ -301,6 +348,7 @@ def cmd_hook
 
     autoload -U add-zsh-hook
     add-zsh-hook chpwd _dkit_chpwd
+    add-zsh-hook precmd _dkit_refresh_globs
     _dkit_chpwd
   ZSH
 end
@@ -393,6 +441,7 @@ def cmd_help
       dkit init                       Create .devcontainer/dkit-intercept with auto-detected defaults
       dkit intercept list             List intercepted commands for current project
       dkit intercept add <cmd>        Add command to current project's intercept list
+      dkit intercept add 'bin/*'      Add glob pattern (quote to prevent shell expansion)
       dkit intercept remove <cmd>     Remove command from current project's intercept list
 
     Verbose routing messages (on by default):

@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-04-13
+
+### Added
+- Glob/wildcard patterns in intercept file: `bin/*` intercepts all executables under `bin/` (e.g. `bin/rails`, `bin/rspec`)
+- New zsh helpers `_dkit_expand_glob` and `_dkit_refresh_globs` for dynamic function creation from glob patterns
+- `precmd` hook automatically picks up new executables and cleans up deleted ones between prompts
+- Help text documents glob usage with quoting example
+
+### Notes
+- Glob patterns must be quoted to prevent shell expansion: `dkit intercept add 'bin/*'`
+- Only executable files are matched (non-executable files like READMEs are skipped)
+- Requires `exec zsh` after gem update to reload the shell hook
+
 ## [0.3.3] - 2026-04-13
 
 ### Changed
