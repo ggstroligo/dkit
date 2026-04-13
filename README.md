@@ -1,5 +1,8 @@
 # dkit
 
+[![Gem Version](https://badge.fury.io/rb/dkit.svg)](https://rubygems.org/gems/dkit)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 DevKit CLI — routes shell commands transparently into a running devcontainer.
 
 When you `cd` into a project, dkit intercepts configured commands (e.g. `rails`, `bundle`, `rspec`) and executes them inside the devcontainer instead of on the host, preserving the correct working directory. When no container is running the commands fall through to the host as normal.

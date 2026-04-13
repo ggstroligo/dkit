@@ -9,7 +9,15 @@ Gem::Specification.new do |spec|
   spec.license       = "MIT"
   spec.required_ruby_version = ">= 2.7.0"
 
-  spec.files         = ["bin/dkit"]
+  spec.homepage = "https://github.com/augustostroligo/dkit"
+  spec.metadata = {
+    "source_code_uri"        => "https://github.com/augustostroligo/dkit",
+    "changelog_uri"          => "https://github.com/augustostroligo/dkit/blob/main/CHANGELOG.md",
+    "bug_tracker_uri"        => "https://github.com/augustostroligo/dkit/issues",
+    "rubygems_mfa_required"  => "true"
+  }
+
+  spec.files         = ["bin/dkit", "LICENSE", "README.md", "CHANGELOG.md"]
   spec.executables   = ["dkit"]
   spec.bindir        = "bin"
 end
