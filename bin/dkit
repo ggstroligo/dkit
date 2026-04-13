@@ -16,7 +16,7 @@ require 'pathname'
 require 'shellwords'
 require 'fileutils'
 
-VERSION   = "0.3.1"
+VERSION   = "0.3.2"
 DC_CONFIG = ".devcontainer/devcontainer.json"
 DC_INTERCEPT = ".devcontainer/dkit-intercept"
 
@@ -255,7 +255,7 @@ def cmd_hook
             if [[ \"\${DKIT_VERBOSE}\" != \"0\" && -n \"\${_DKIT_ROOT}\" ]]; then
               local _ic=\"\${_DKIT_ROOT}/.devcontainer/dkit-intercept\"
               if ! grep -qxF 'verbose: false' \"\$_ic\" 2>/dev/null; then
-                print -u2 \"[dkit] ${cmd} → host\"
+                printf '\\033[31m[dkit] %s → host (fallback)\\033[0m\\n' \"${cmd}\" >&2
               fi
             fi
             command ${cmd} \"\$@\"
@@ -286,7 +286,7 @@ def cmd_hook
         if [[ "${DKIT_VERBOSE}" != "0" && -n "${_DKIT_ROOT}" ]]; then
           local _ic="${_DKIT_ROOT}/.devcontainer/dkit-intercept"
           if ! grep -qxF 'verbose: false' "$_ic" 2>/dev/null; then
-            print -u2 "[dkit] code → host"
+            printf '\033[31m[dkit] code → host (fallback)\033[0m\n' >&2
           fi
         fi
         command code "$@"
@@ -300,7 +300,7 @@ def cmd_hook
         if [[ "${DKIT_VERBOSE}" != "0" && -n "${_DKIT_ROOT}" ]]; then
           local _ic="${_DKIT_ROOT}/.devcontainer/dkit-intercept"
           if ! grep -qxF 'verbose: false' "$_ic" 2>/dev/null; then
-            print -u2 "[dkit] claude → host"
+            printf '\033[31m[dkit] claude → host (fallback)\033[0m\n' >&2
           fi
         fi
         command claude "$@"
@@ -315,14 +315,14 @@ end
 
 def cmd_exec(ctx, args)
   abort_err("exec: no command given") if args.empty?
-  warn "[dkit] #{args.join(" ")} → #{ctx.container}" if verbose_enabled?(ctx.project_root)
+  warn "\e[32m[dkit] #{args.join(" ")} → #{ctx.container}\e[0m" if verbose_enabled?(ctx.project_root)
   system("docker", "exec", "--user", ctx.user, "--workdir", ctx.cwd, ctx.container, *args)
   exit $?.exitstatus
 end
 
 def cmd_run(ctx, args)
   abort_err("run: no command given") if args.empty?
-  warn "[dkit] #{args.join(" ")} → #{ctx.container}" if verbose_enabled?(ctx.project_root)
+  warn "\e[32m[dkit] #{args.join(" ")} → #{ctx.container}\e[0m" if verbose_enabled?(ctx.project_root)
   exec("docker", "exec", "-it", "--user", ctx.user, "--workdir", ctx.cwd, ctx.container, *args)
 end
 
@@ -331,10 +331,12 @@ def cmd_shell(ctx)
 end
 
 def cmd_claude(ctx, args)
+  warn "\e[32m[dkit] claude → #{ctx.container}\e[0m" if verbose_enabled?(ctx.project_root)
   exec("docker", "exec", "-it", "--user", ctx.user, "--workdir", ctx.cwd, ctx.container, "claude", *args)
 end
 
 def cmd_code(ctx, path_arg)
+  warn "\e[32m[dkit] code → #{ctx.container}\e[0m" if verbose_enabled?(ctx.project_root)
   host_path = path_arg ? File.expand_path(path_arg) : ctx.project_root
   rel = begin
     Pathname(host_path).relative_path_from(Pathname(ctx.project_root)).to_s
