@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-04-13
+
+### Added
+- Verbose fallback message: when a command falls back to the host (container not running), prints `[dkit] <cmd> → host` to stderr if verbose is enabled
+- Fallback messages respect the same config as container messages: `verbose: false` in `.devcontainer/dkit-intercept` or `DKIT_VERBOSE=0` env var suppress them
+
+### Notes
+- Requires `exec zsh` after gem update to reload the shell hook with the updated function templates
+
 ## [0.3.0] - 2026-04-13
 
 ### Added
