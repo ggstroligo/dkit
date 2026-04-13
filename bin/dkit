@@ -237,6 +237,13 @@ def cmd_hook
       _DKIT_ACTIVE_CMDS=()
     }
 
+    _dkit_verbose_fallback() {
+      [[ "${DKIT_VERBOSE}" == "0" || -z "${_DKIT_ROOT}" ]] && return
+      local _ic="${_DKIT_ROOT}/.devcontainer/dkit-intercept"
+      grep -qxF 'verbose: false' "$_ic" 2>/dev/null && return
+      printf '\033[31m[dkit] %s → host (fallback)\033[0m\n' "$1" >&2
+    }
+
     _dkit_load() {
       local root="$1"
       local intercept="$root/.devcontainer/dkit-intercept"
@@ -252,12 +259,7 @@ def cmd_hook
           if dkit status --quiet 2>/dev/null; then
             dkit run ${cmd} \"\$@\"
           else
-            if [[ \"\${DKIT_VERBOSE}\" != \"0\" && -n \"\${_DKIT_ROOT}\" ]]; then
-              local _ic=\"\${_DKIT_ROOT}/.devcontainer/dkit-intercept\"
-              if ! grep -qxF 'verbose: false' \"\$_ic\" 2>/dev/null; then
-                printf '\\033[31m[dkit] %s → host (fallback)\\033[0m\\n' \"${cmd}\" >&2
-              fi
-            fi
+            _dkit_verbose_fallback \"${cmd}\"
             command ${cmd} \"\$@\"
           fi
         }"
@@ -283,12 +285,7 @@ def cmd_hook
       if dkit status --quiet 2>/dev/null; then
         dkit code "$@"
       else
-        if [[ "${DKIT_VERBOSE}" != "0" && -n "${_DKIT_ROOT}" ]]; then
-          local _ic="${_DKIT_ROOT}/.devcontainer/dkit-intercept"
-          if ! grep -qxF 'verbose: false' "$_ic" 2>/dev/null; then
-            printf '\033[31m[dkit] code → host (fallback)\033[0m\n' >&2
-          fi
-        fi
+        _dkit_verbose_fallback "code"
         command code "$@"
       fi
     }
@@ -297,12 +294,7 @@ def cmd_hook
       if dkit status --quiet 2>/dev/null; then
         dkit claude "$@"
       else
-        if [[ "${DKIT_VERBOSE}" != "0" && -n "${_DKIT_ROOT}" ]]; then
-          local _ic="${_DKIT_ROOT}/.devcontainer/dkit-intercept"
-          if ! grep -qxF 'verbose: false' "$_ic" 2>/dev/null; then
-            printf '\033[31m[dkit] claude → host (fallback)\033[0m\n' >&2
-          fi
-        fi
+        _dkit_verbose_fallback "claude"
         command claude "$@"
       fi
     }
