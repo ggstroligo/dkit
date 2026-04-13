@@ -10,6 +10,7 @@ When you `cd` into a project, dkit intercepts configured commands (e.g. `rails`,
 ## Requirements
 
 - macOS or Linux
+- zsh (bash and other shells are not supported)
 - Ruby >= 2.7
 - Docker with Compose v2 (`docker compose`)
 - A project with `.devcontainer/devcontainer.json` using `dockerComposeFile` + `service`
@@ -56,9 +57,12 @@ git commit -m "chore: add dkit intercept config"
 ```sh
 dkit intercept list              # show active commands for this project
 dkit intercept add terraform     # add a command
+dkit intercept add 'bin/*'       # add a glob pattern (quote to prevent shell expansion)
 dkit intercept remove terraform  # remove a command
 exec zsh                         # reload shell to apply changes
 ```
+
+Glob patterns like `bin/*` intercept all matching executables at once (e.g. `bin/rails`, `bin/rspec`). New files are picked up automatically at each prompt.
 
 ### Verbose routing messages
 
@@ -100,17 +104,18 @@ dkit down  [flags]          docker compose down
 dkit logs  [service]        docker compose logs -f
 
 dkit init                   Create .devcontainer/dkit-intercept
-dkit intercept list|add|remove <cmd>
+dkit intercept list|add|remove <cmd|pattern>
 dkit hook                   Emit shell hook for ~/.zshrc
 dkit version
 ```
 
 ## How it works
 
-1. On `cd`, the shell hook calls `dkit root` to find the nearest `.devcontainer/devcontainer.json`.
-2. It reads `.devcontainer/dkit-intercept` and defines a shell function for each listed command.
+1. On `cd`, the zsh `chpwd` hook calls `dkit root` to find the nearest `.devcontainer/devcontainer.json`.
+2. It reads `.devcontainer/dkit-intercept` and defines a zsh function for each listed command. Glob patterns (e.g. `bin/*`) are expanded to matching executables.
 3. Each function calls `dkit status --quiet` to check if the container is running. If yes, it delegates to `dkit run <cmd>`; otherwise it calls the host binary.
 4. `dkit run` resolves the container name from the devcontainer config (via compose YAML, docker labels, or `docker compose ps`) and execs into it at the mirrored working directory.
+5. A `precmd` hook re-expands glob patterns before each prompt, picking up new files and cleaning up deleted ones.
 
 ## devcontainer.json requirements
 
