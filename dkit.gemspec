@@ -9,11 +9,11 @@ Gem::Specification.new do |spec|
   spec.license       = "MIT"
   spec.required_ruby_version = ">= 2.7.0"
 
-  spec.homepage = "https://github.com/augustostroligo/dkit"
+  spec.homepage = "https://github.com/ggstroligo/dkit"
   spec.metadata = {
-    "source_code_uri"        => "https://github.com/augustostroligo/dkit",
-    "changelog_uri"          => "https://github.com/augustostroligo/dkit/blob/main/CHANGELOG.md",
-    "bug_tracker_uri"        => "https://github.com/augustostroligo/dkit/issues",
+    "source_code_uri"        => "https://github.com/ggstroligo/dkit",
+    "changelog_uri"          => "https://github.com/ggstroligo/dkit/blob/main/CHANGELOG.md",
+    "bug_tracker_uri"        => "https://github.com/ggstroligo/dkit/issues",
     "rubygems_mfa_required"  => "true"
   }
 

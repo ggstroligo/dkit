@@ -1,6 +1,6 @@
 # Contributing to dkit
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/augustostroligo/dkit.
+Bug reports and pull requests are welcome on GitHub at https://github.com/ggstroligo/dkit.
 
 ## Reporting bugs
 
@@ -14,7 +14,7 @@ Open an issue including:
 ## Development setup
 
 ```sh
-git clone https://github.com/augustostroligo/dkit
+git clone https://github.com/ggstroligo/dkit
 cd dkit
 ```
 
