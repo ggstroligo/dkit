@@ -9,6 +9,7 @@ When you `cd` into a project, dkit intercepts configured commands (e.g. `rails`,
 
 ## Requirements
 
+- macOS or Linux
 - Ruby >= 2.7
 - Docker with Compose v2 (`docker compose`)
 - A project with `.devcontainer/devcontainer.json` using `dockerComposeFile` + `service`
@@ -59,6 +60,28 @@ dkit intercept remove terraform  # remove a command
 exec zsh                         # reload shell to apply changes
 ```
 
+### Verbose routing messages
+
+By default, dkit prints a line to stderr whenever it intercepts a command:
+
+```
+[dkit] rails server → myapp-dev
+```
+
+To disable **per project** (committed, shared with the team), add to `.devcontainer/dkit-intercept`:
+
+```
+verbose: false
+rails
+bundle
+```
+
+To disable **personally** regardless of project config:
+
+```sh
+export DKIT_VERBOSE=0   # add to ~/.zshrc
+```
+
 ## Usage
 
 ```
@@ -105,6 +128,7 @@ dkit reads the following fields:
 | Variable | Purpose |
 |---|---|
 | `DKIT_PROJECT_ROOT` | Override project root resolution (useful in scripts) |
+| `DKIT_VERBOSE` | Set to `0` to suppress routing messages globally |
 
 ## License
 

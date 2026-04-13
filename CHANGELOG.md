@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-04-13
+
+### Added
+- Verbose routing messages: when a command is intercepted, prints `[dkit] <cmd> → <container>` to stderr before executing
+- `verbose_enabled?` helper that checks both env var and intercept file directive
+- Disable per-project: add `verbose: false` to `.devcontainer/dkit-intercept` (committed, shared with team)
+- Disable personally: set `DKIT_VERBOSE=0` env var (takes precedence over intercept file)
+- `dkit init` now includes `# verbose: false` comment in the generated intercept file
+
+### Changed
+- `dkit help` documents verbose configuration options
+
+### Notes
+- Compatible with Linux and macOS (no platform-specific dependencies)
+
 ## [0.2.0] - 2026-04-13
 
 ### Added

@@ -16,7 +16,7 @@ require 'pathname'
 require 'shellwords'
 require 'fileutils'
 
-VERSION   = "0.2.0"
+VERSION   = "0.3.0"
 DC_CONFIG = ".devcontainer/devcontainer.json"
 DC_INTERCEPT = ".devcontainer/dkit-intercept"
 
@@ -90,6 +90,13 @@ def intercept_remove(project_root, cmd)
   lines = File.readlines(f).reject { |l| l.strip == cmd }
   File.write(f, lines.join)
   puts "dkit: removed '#{cmd}' — reload shell to deactivate (exec zsh)"
+end
+
+def verbose_enabled?(project_root)
+  return false if ENV["DKIT_VERBOSE"] == "0"
+  f = intercept_file(project_root)
+  return true unless File.exist?(f)
+  !File.readlines(f, chomp: true).any? { |l| l.strip == "verbose: false" }
 end
 
 # ── Devcontainer config ────────────────────────────────────────────────────────
@@ -207,7 +214,7 @@ def cmd_init
   cmds += %w[yarn node npx]                   if File.exist?(File.join(root, "package.json"))
   cmds = %w[bash]                             if cmds.empty?
 
-  File.write(f, cmds.join("\n") + "\n")
+  File.write(f, "# verbose: false  # uncomment to suppress routing messages\n" + cmds.join("\n") + "\n")
   puts "dkit: created #{f}"
   puts "Commands: #{cmds.join(", ")}"
   puts "Tip: commit this file to share with your team"
@@ -290,12 +297,14 @@ end
 
 def cmd_exec(ctx, args)
   abort_err("exec: no command given") if args.empty?
+  warn "[dkit] #{args.join(" ")} → #{ctx.container}" if verbose_enabled?(ctx.project_root)
   system("docker", "exec", "--user", ctx.user, "--workdir", ctx.cwd, ctx.container, *args)
   exit $?.exitstatus
 end
 
 def cmd_run(ctx, args)
   abort_err("run: no command given") if args.empty?
+  warn "[dkit] #{args.join(" ")} → #{ctx.container}" if verbose_enabled?(ctx.project_root)
   exec("docker", "exec", "-it", "--user", ctx.user, "--workdir", ctx.cwd, ctx.container, *args)
 end
 
@@ -373,6 +382,10 @@ def cmd_help
       dkit intercept list             List intercepted commands for current project
       dkit intercept add <cmd>        Add command to current project's intercept list
       dkit intercept remove <cmd>     Remove command from current project's intercept list
+
+    Verbose routing messages (on by default):
+      Add 'verbose: false' to .devcontainer/dkit-intercept  (per project, committed)
+      Export DKIT_VERBOSE=0                                  (personal override)
 
       dkit hook                       Emit shell hook code for ~/.zshrc
       dkit version                    Print version
