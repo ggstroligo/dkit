@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-04-24
+
+### Changed
+- **Breaking:** Refactored single-file CLI (`bin/dkit`, ~560 lines) into modular structure under `Dkit` namespace (`lib/dkit/`)
+- `bin/dkit` is now a 3-line entry point that delegates to `Dkit::Commands.dispatch`
+- `Dkit::Container` is autoloaded — hot-path commands (`dkit root`, `dkit hook`, `dkit help`, `dkit version`) no longer load `json`/`yaml` parsers
+- Gemspec reads version from `lib/dkit/version.rb` instead of `bin/dkit`
+
+### Added
+- Minitest test suite: 64 tests, 154 assertions covering all modules
+- `Rakefile` with `rake test` task
+- Modules: `Dkit::Project`, `Dkit::Intercept`, `Dkit::Container`, `Dkit::Context`, `Dkit::ShellHook`, `Dkit::Commands`
+
+### Notes
+- No changes to CLI behavior, flags, or intercept file format — fully backwards compatible at the user level
+- Zero external dependencies maintained (minitest is stdlib)
+
 ## [0.4.1] - 2026-04-13
 
 ### Fixed
