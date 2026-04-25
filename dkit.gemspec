@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name          = "dkit"
-  spec.version       = File.read("bin/dkit")[/VERSION\s*=\s*"([^"]+)"/, 1]
+  spec.version       = File.read("lib/dkit/version.rb")[/VERSION\s*=\s*"([^"]+)"/, 1]
   spec.authors       = ["Augusto Stroligo"]
   spec.summary       = "DevKit CLI: routes shell commands into a running devcontainer"
   spec.description   = "Routes shell commands transparently into a running devcontainer " \
@@ -17,7 +17,7 @@ Gem::Specification.new do |spec|
     "rubygems_mfa_required"  => "true"
   }
 
-  spec.files         = ["bin/dkit", "LICENSE", "README.md", "CHANGELOG.md"]
+  spec.files         = Dir["lib/**/*.rb"] + ["bin/dkit", "LICENSE", "README.md", "CHANGELOG.md"]
   spec.executables   = ["dkit"]
   spec.bindir        = "bin"
 end

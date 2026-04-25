@@ -8,7 +8,20 @@ A Ruby CLI gem that transparently routes shell commands from the host into a run
 
 ## Project structure
 
-This is a single-file CLI tool. All logic lives in `bin/dkit` (~470 lines, pure Ruby, zero external dependencies). There is no `lib/` directory, no classes or modules — just procedural functions and one `Context` struct.
+Modular Ruby gem under the `Dkit` namespace. Zero external dependencies (stdlib only).
+
+```
+bin/dkit                    # Thin entry point (~3 lines)
+lib/dkit.rb                 # Module entry point, requires/autoloads
+lib/dkit/version.rb         # Dkit::VERSION
+lib/dkit/project.rb         # Dkit::Project — find_project_root, constants
+lib/dkit/intercept.rb       # Dkit::Intercept — intercept file CRUD, verbose
+lib/dkit/container.rb       # Dkit::Container — docker helper, config, resolution (autoloaded)
+lib/dkit/context.rb         # Dkit::Context struct + Dkit.resolve!
+lib/dkit/shell_hook.rb      # Dkit::ShellHook — zsh hook generation
+lib/dkit/commands.rb        # Dkit::Commands — all cmd_* + dispatch
+test/                       # Minitest suite
+```
 
 ## Common commands
 
@@ -16,35 +29,43 @@ This is a single-file CLI tool. All logic lives in `bin/dkit` (~470 lines, pure 
 # Run during development
 ruby bin/dkit help
 
+# Run tests
+rake test
+
 # Build and install locally
 gem build dkit.gemspec && gem install dkit-*.gem
 
-# Test manually (no automated test suite exists)
+# Manual testing
 ruby bin/dkit intercept list
 ruby bin/dkit shell
 ```
 
 ## Architecture
 
-**Entry point:** `bin/dkit` parses `ARGV[0]` and routes to the matching `cmd_*` function.
+**Entry point:** `bin/dkit` requires `lib/dkit` and calls `Dkit::Commands.dispatch(ARGV)`.
 
-**Core flow:**
-1. `find_project_root()` — walks up from CWD looking for `.devcontainer/devcontainer.json`
-2. `resolve!()` — builds a `Context` struct with project root, container name, user, workspace, CWD mapping, and compose files
-3. `cmd_*` functions — execute docker commands using the resolved context
+**Module responsibilities:**
+- `Dkit::Project` — walks up from CWD looking for `.devcontainer/devcontainer.json`
+- `Dkit::Container` — docker CLI wrapper, config loading, container name resolution (3 strategies), running check, CWD mapping. **Autoloaded** to avoid loading json/yaml on hot-path commands.
+- `Dkit::Context` — struct with resolved devcontainer state. `Dkit.resolve!` orchestrates Project + Container.
+- `Dkit::Intercept` — CRUD for `.devcontainer/dkit-intercept` + verbose control
+- `Dkit::ShellHook` — generates the zsh hook code (~130 lines of zsh)
+- `Dkit::Commands` — all `cmd_*` methods + dispatch table
 
-**Container resolution** (`resolve_container_name`) uses three strategies in order:
+**Container resolution** (`Dkit::Container.resolve_name`) uses three strategies in order:
 1. Parse `docker-compose.yml` service name
 2. Docker inspect by devcontainer label
 3. `docker compose ps`
 
 **Intercept system:** The shell hook (`cmd_hook`) emits zsh `preexec` code. Commands listed in `.devcontainer/dkit-intercept` get routed into the container instead of running on the host. The intercept file also supports a `verbose:` setting.
 
-**Version** is defined as `VERSION = "x.y.z"` near the top of `bin/dkit` and read by the gemspec.
+**Version** is defined in `lib/dkit/version.rb` and read by the gemspec.
 
 ## Key conventions
 
-- No external gem dependencies — stdlib only (json, yaml, open3, fileutils, shellwords)
-- The gemspec reads the version directly from `bin/dkit`
-- Platform support: macOS and Linux (uses `sed` flag detection for compatibility)
+- No external gem dependencies — stdlib only (json, yaml, fileutils, shellwords, pathname)
+- The gemspec reads the version from `lib/dkit/version.rb`
+- `Dkit::Container` is autoloaded to keep hot-path commands fast (no json/yaml parsing)
+- Platform support: macOS and Linux
 - Requires Ruby >= 2.7.0
+- Tests use minitest (stdlib)
